@@ -105,9 +105,12 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = aws_iam_role.nodes.arn
   subnet_ids      = [aws_subnet.public_1.id, aws_subnet.public_2.id]
 
-  scaling_config { desired_size = 1; max_size = 2; min_size = 1 }
-  instance_types = ["t3.medium"] # Smallest required instance type to host Prometheus + Grafana
-
-  depends_on = [aws_iam_role_policy_attachment.node_policies]
+  scaling_config { 
+    desired_size = 1
+    max_size = 2
+    min_size = 1 
+    }
+    instance_types = ["t3.medium"] # Smallest required instance type to host Prometheus + Grafana
+    depends_on = [aws_iam_role_policy_attachment.node_policies]
 }
 
