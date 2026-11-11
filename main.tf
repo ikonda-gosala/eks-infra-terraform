@@ -9,6 +9,15 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  # REMOTE STATE BACKEND LINKING
+  backend "s3" {
+    bucket         = "end-to-end-devops-prjct" # Replace with your actual S3 bucket name
+    key            = "eks/terraform.tfstate"
+    region         = "ap-southeast-2"                      # Matches your GHA pipeline region
+    dynamodb_table = "dynamodb-for-state-locking" # Replace with your actual DynamoDB table name
+    encrypt        = true
+  }
 }
 
 provider "aws" {
@@ -52,15 +61,15 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table_association" "pub1" { 
-  subnet_id = aws_subnet.public_1.id
-  route_table_id = aws_route_table.public.id 
-  }
-resource "aws_route_table_association" "pub2" { 
-  subnet_id = aws_subnet.public_2.id
-  route_table_id = aws_route_table.public.id 
-  }
+resource "aws_route_table_association" "pub1" {
+  subnet_id      = aws_subnet.public_1.id
+  route_table_id = aws_route_table.public.id
+}
 
+resource "aws_route_table_association" "pub2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
+}
 
 # ==========================================
 # EKS CONTROL PLANE & NODE GROUP
@@ -69,7 +78,7 @@ resource "aws_iam_role" "cluster" {
   name = "eks-cluster-mini-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "://amazonaws.com" } }]
+    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "eks.amazonaws.com" } }] # Fixed typo from "://"
   })
 }
 
@@ -80,7 +89,7 @@ resource "aws_iam_role_policy_attachment" "cluster" {
 
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.cluster.role_arn
+  role_arn = aws_iam_role.cluster.arn
   vpc_config { subnet_ids = [aws_subnet.public_1.id, aws_subnet.public_2.id] }
   depends_on = [aws_iam_role_policy_attachment.cluster]
 }
@@ -89,7 +98,7 @@ resource "aws_iam_role" "nodes" {
   name = "eks-nodes-mini-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "://amazonaws.com" } }]
+    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" } }] # Fixed typo from "://"
   })
 }
 
@@ -105,12 +114,11 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = aws_iam_role.nodes.arn
   subnet_ids      = [aws_subnet.public_1.id, aws_subnet.public_2.id]
 
-  scaling_config { 
+  scaling_config {
     desired_size = 1
-    max_size = 2
-    min_size = 1 
-    }
-    instance_types = ["t3.medium"] # Smallest required instance type to host Prometheus + Grafana
-    depends_on = [aws_iam_role_policy_attachment.node_policies]
+    max_size     = 2
+    min_size     = 1
+  }
+  instance_types = ["t3.medium"] # Smallest required instance type to host Prometheus + Grafana
+  depends_on     = [aws_iam_role_policy_attachment.node_policies]
 }
-
