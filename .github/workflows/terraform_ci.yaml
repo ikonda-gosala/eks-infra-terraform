@@ -22,8 +22,8 @@ jobs:
       - name: Authenticate via AWS OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/YOUR_MANUALLY_CREATED_OIDC_ROLE_NAME
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::217856377746:role/github-actions-role-for-terraform
+          aws-region: ap-southeast-2
 
       - name: Initialize HashiCorp Terraform
         uses: hashicorp/setup-terraform@v3
