@@ -1,0 +1,44 @@
+name: "Provision AWS Cloud Infrastructure"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required to request the JWT token from AWS OIDC
+  contents: read    # Required to check out your repository code
+
+jobs:
+  terraform:
+    name: "Terraform Plan and Apply"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Base
+        uses: actions/checkout@v4
+
+      - name: Authenticate via AWS OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/YOUR_MANUALLY_CREATED_OIDC_ROLE_NAME
+          aws-region: us-east-1
+
+      - name: Initialize HashiCorp Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Initialize Code Modules
+        run: terraform init
+
+      - name: Generate Infrastructure Plan
+        run: terraform plan -input=false
+
+      # Uncomment the two lines below when you want GitHub Actions to automatically deploy the infrastructure on every push
+      # - name: Deploy Cloud Architecture
+      #   run: terraform apply -auto-approve -input=false
