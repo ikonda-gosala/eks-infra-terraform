@@ -40,5 +40,5 @@ jobs:
       # - name: Deploy Cloud Architecture
       #   run: terraform apply -auto-approve -input=false
 
-      - name: Destroy terraform
-        run: terraform destroy -auto-approve -input=false
+      # - name: Destroy terraform
+      #   run: terraform destroy -auto-approve -input=false
