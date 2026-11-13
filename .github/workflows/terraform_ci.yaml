@@ -37,8 +37,8 @@ jobs:
         run: terraform plan -input=false
 
       # Uncomment the two lines below when you want GitHub Actions to automatically deploy the infrastructure on every push
-      # - name: Deploy Cloud Architecture
-      #   run: terraform apply -auto-approve -input=false
+      - name: Deploy Cloud Architecture
+        run: terraform apply -auto-approve -input=false
 
       # - name: Destroy terraform
       #   run: terraform destroy -auto-approve -input=false
